@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda de Tarefas com Cronômetros</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6889b2;
+            --accent-color: #ff6b6b;
+            --light-bg: #f8f9fa;
+            --dark-bg: #343a40;
+            --text-color: #333;
+            --light-text: #f8f9fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            min-height: 80vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .task-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        button.delete {
+            background-color: var(--accent-color);
+        }
+
+        button.delete:hover {
+            background-color: #ff4f4f;
+        }
+
+        .task-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .task-item {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .task-priority {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            color: white;
+        }
+
+        .priority-high {
+            background-color: #e74c3c;
+        }
+
+        .priority-medium {
+            background-color: #f39c12;
+        }
+
+        .priority-low {
+            background-color: #27ae60;
+        }
+
+        .task-description {
+            color: #666;
+        }
+
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .task-timer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .timer-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+            min-width: 70px;
+        }
+
+        .completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--primary-color);
+            transition: width 0.5s;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 0;
+            color: #777;
+        }
+
+        .empty-state i {
+            font-size: 50px;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Modo escuro toggle */
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--light-bg);
+        }
+
+        .dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--light-text);
+        }
+
+        .dark-mode .container {
+            background-color: #2c3338;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .dark-mode .task-item {
+            background-color: #3a4046;
+            border-color: #4a4f55;
+        }
+
+        .dark-mode .task-description {
+            color: #bbb;
+        }
+
+        .dark-mode .task-meta {
+            color: #aaa;
+            border-color: #4a4f55;
+        }
+
+        .dark-mode input, .dark-mode select, .dark-mode textarea {
+            background-color: #444;
+            border-color: #555;
+            color: #fff;
+        }
+
+        .dark-mode .task-form, .dark-mode .filters {
+            background-color: #3a4046;
+        }
+
+        .dark-mode .progress-bar {
+            background-color: #444;
+        }
+
+        .responsive-warning {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            background-color: #fff3cd;
+            color: #856404;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .task-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .task-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .responsive-warning {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="theme-toggle" id="themeToggle">
+            🌙
+        </div>
+        
+        <header>
+            <h1>Agenda de Tarefas com Cronômetros</h1>
+            <p>Gerencie suas tarefas com temporizadores individuais</p>
+        </header>
+
+        <div class="responsive-warning">
+            Visualização melhor em telas maiores.
+        </div>
+
+        <form id="taskForm" class="task-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="taskTitle">Título da Tarefa</label>
+                    <input type="text" id="taskTitle" required placeholder="Digite o título da tarefa">
+                </div>
+                <div class="form-group">
+                    <label for="taskPriority">Prioridade</label>
+                    <select id="taskPriority">
+                        <option value="low">Baixa</option>
+                        <option value="medium" selected>Média</option>
+                        <option value="high">Alta</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="taskDescription">Descrição</label>
+                <textarea id="taskDescription" placeholder="Descreva sua tarefa (opcional)"></textarea>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="taskDueDate">Data de Conclusão</label>
+                    <input type="date" id="taskDueDate">
+                </div>
+                <div class="form-group">
+                    <label for="taskTimeAllocation">Tempo Estimado (minutos)</label>
+                    <input type="number" id="taskTimeAllocation" min="1" value="30">
+                </div>
+            </div>
+            
+            <button type="submit">Adicionar Tarefa</button>
+        </form>
+
+        <div class="filters">
+            <div class="form-group">
+                <label for="filterStatus">Filtrar por Status</label>
+                <select id="filterStatus">
+                    <option value="all" selected>Todas</option>
+                    <option value="active">Ativas</option>
+                    <option value="completed">Concluídas</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="filterPriority">Filtrar por Prioridade</label>
+                <select id="filterPriority">
+                    <option value="all" selected>Todas</option>
+                    <option value="high">Alta</option>
+                    <option value="medium">Média</option>
+                    <option value="low">Baixa</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="sortBy">Ordenar por</label>
+                <select id="sortBy">
+                    <option value="date-asc">Data (mais antiga)</option>
+                    <option value="date-desc" selected>Data (mais recente)</option>
+                    <option value="priority-desc">Prioridade (mais alta)</option>
+                    <option value="priority-asc">Prioridade (mais baixa)</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="taskList" class="task-list">
+            <div class="empty-state">
+                <p>Você não tem tarefas no momento</p>
+                <p>Adicione uma nova tarefa usando o formulário acima</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elementos do DOM
+            const taskForm = document.getElementById('taskForm');
+            const taskList = document.getElementById('taskList');
+            const filterStatus = document.getElementById('filterStatus');
+            const filterPriority = document.getElementById('filterPriority');
+            const sortBy = document.getElementById('sortBy');
+            const themeToggle = document.getElementById('themeToggle');
+            
+            // Armazenamento local de tarefas
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            let timers = {};
+            
+            // Alternar modo escuro
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+                localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            });
+            
+            // Verificar preferência de tema
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+                themeToggle.textContent = '☀️';
+            }
+            
+            // Adicionar nova tarefa
+            taskForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const newTask = {
+                    id: Date.now().toString(),
+                    title: document.getElementById('taskTitle').value,
+                    description: document.getElementById('taskDescription').value,
+                    priority: document.getElementById('taskPriority').value,
+                    dueDate: document.getElementById('taskDueDate').value,
+                    timeAllocation: parseInt(document.getElementById('taskTimeAllocation').value) * 60, // Converter para segundos
+                    timeSpent: 0,
+                    completed: false,
+                    createdAt: new Date().toISOString()
+                };
+                
+                tasks.push(newTask);
+                saveTasks();
+                renderTasks();
+                taskForm.reset();
+                document.getElementById('taskTimeAllocation').value = '30';
+                document.getElementById('taskPriority').value = 'medium';
+            });
+            
+            // Filtrar e ordenar tarefas
+            function filterAndSortTasks() {
+                const statusFilter = filterStatus.value;
+                const priorityFilter = filterPriority.value;
+                const sortOption = sortBy.value;
+                
+                let filteredTasks = [...tasks];
+                
+                // Aplicar filtros
+                if (statusFilter !== 'all') {
+                    const isCompleted = statusFilter === 'completed';
+                    filteredTasks = filteredTasks.filter(task => task.completed === isCompleted);
+                }
+                
+                if (priorityFilter !== 'all') {
+                    filteredTasks = filteredTasks.filter(task => task.priority === priorityFilter);
+                }
+                
+                // Aplicar ordenação
+                switch (sortOption) {
+                    case 'date-asc':
+                        filteredTasks.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                        break;
+                    case 'date-desc':
+                        filteredTasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                        break;
+                    case 'priority-desc':
+                        const priorityOrder = { high: 3, medium: 2, low: 1 };
+                        filteredTasks.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+                        break;
+                    case 'priority-asc':
+                        const priorityOrderAsc = { high: 3, medium: 2, low: 1 };
+                        filteredTasks.sort((a, b) => priorityOrderAsc[a.priority] - priorityOrderAsc[b.priority]);
+                        break;
+                }
+                
+                return filteredTasks;
+            }
+            
+            // Adicionar listeners de eventos para filtros
+            filterStatus.addEventListener('change', renderTasks);
+            filterPriority.addEventListener('change', renderTasks);
+            sortBy.addEventListener('change', renderTasks);
+            
+            // Renderizar tarefas
+            function renderTasks() {
+                const filteredTasks = filterAndSortTasks();
+                
+                if (filteredTasks.length === 0) {
+                    taskList.innerHTML = `
+                        <div class="empty-state">
+                            <p>Nenhuma tarefa encontrada</p>
+                            <p>Adicione uma nova tarefa ou ajuste seus filtros</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                taskList.innerHTML = '';
+                
+                filteredTasks.forEach(task => {
+                    // Calcular progresso
+                    const progress = task.timeAllocation > 0 
+                        ? Math.min(100, (task.timeSpent / task.timeAllocation) * 100) 
+                        : 0;
+                    
+                    // Formatar o tempo
+                    const totalTimeFormatted = formatTime(task.timeAllocation);
+                    const timeSpentFormatted = formatTime(task.timeSpent);
+                    
+                    const taskElement = document.createElement('div');
+                    taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
+                    
+                    const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "Sem data";
+                    
+                    taskElement.innerHTML = `
+                        <div class="task-header">
+                            <div class="task-title">${task.title}</div>
+                            <div class="task-priority priority-${task.priority}">
+                                ${task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa'}
+                            </div>
+                        </div>
+                        
+                        ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                        
+                        <div class="progress-bar">
+                            <div class="progress" style="width: ${progress}%"></div>
+                        </div>
+                        
+                        <div class="task-meta">
+                            <div>Data limite: ${dueDate}</div>
+                            <div>Tempo gasto: ${timeSpentFormatted} / ${totalTimeFormatted}</div>
+                        </div>
+                        
+                        <div class="task-timer">
+                            <div class="timer-display" id="timer-${task.id}">${timeSpentFormatted}</div>
+                            <div class="task-controls">
+                                ${!task.completed ? `
+                                    <button class="timer-toggle" data-id="${task.id}">
+                                        ${timers[task.id] ? '⏸️ Pausar' : '▶️ Iniciar'}
+                                    </button>
+                                    <button class="complete-task" data-id="${task.id}">✅ Concluir</button>
+                                ` : `
+                                    <button class="restore-task" data-id="${task.id}">↩️ Restaurar</button>
+                                `}
+                                <button class="delete" data-id="${task.id}">🗑️ Excluir</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    taskList.appendChild(taskElement);
+                });
+                
+                // Adicionar event listeners para os botões
+                document.querySelectorAll('.timer-toggle').forEach(button => {
+                    button.addEventListener('click', toggleTimer);
+                });
+                
+                document.querySelectorAll('.complete-task').forEach(button => {
+                    button.addEventListener('click', completeTask);
+                });
+                
+                document.querySelectorAll('.restore-task').forEach(button => {
+                    button.addEventListener('click', restoreTask);
+                });
+                
+                document.querySelectorAll('.delete').forEach(button => {
+                    button.addEventListener('click', deleteTask);
+                });
+            }
+            
+            // Formatar tempo para exibição (formato: HH:MM:SS)
+            function formatTime(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+                
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            // Alternar cronômetro
+            function toggleTimer(e) {
+                const taskId = e.target.dataset.id;
+                const task = tasks.find(t => t.id === taskId);
+                
+                if (!task || task.completed) return;
+                
+                if (timers[taskId]) {
+                    // Parar o cronômetro
+                    clearInterval(timers[taskId]);
+                    delete timers[taskId];
+                    e.target.textContent = '▶️ Iniciar';
+                } else {
+                    // Iniciar o cronômetro
+                    timers[taskId] = setInterval(() => {
+                        task.timeSpent++;
+                        const timerDisplay = document.getElementById(`timer-${taskId}`);
+                        if (timerDisplay) {
+                            timerDisplay.textContent = formatTime(task.timeSpent);
+                        }
+                        
+                        // Atualizar a barra de progresso
+                        const progressBar = e.target.closest('.task-item').querySelector('.progress');
+                        const progress = task.timeAllocation > 0 
+                            ? Math.min(100, (task.timeSpent / task.timeAllocation) * 100) 
+                            : 0;
+                        progressBar.style.width = `${progress}%`;
+                        
+                        // Atualizar tempo na meta
+                        const timeMeta = e.target.closest('.task-item').querySelector('.task-meta div:last-child');
+                        timeMeta.textContent = `Tempo gasto: ${formatTime(task.timeSpent)} / ${formatTime(task.timeAllocation)}`;
+                        
+                        saveTasks();
+                        
+                        // Verificar se o tempo alocado foi atingido
+                        if (task.timeSpent >= task.timeAllocation) {
+                            notifyTimeCompletion(task);
+                        }
+                    }, 1000);
+                    e.target.textContent = '⏸️ Pausar';
+                }
+            }
+            
+            // Notificar quando o tempo alocado for atingido
+            function notifyTimeCompletion(task) {
+                // Verificar se a notificação já foi mostrada
+                if (task.notified) return;
+                
+                task.notified = true;
+                
+                // Verificar suporte a notificações
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("Tempo completado!", {
+                        body: `O tempo alocado para "${task.title}" foi atingido.`,
+                        icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%234a6fa5'/><text x='32' y='40' font-size='30' text-anchor='middle' fill='white'>⏰</text></svg>"
+                    });
+                } else {
+                    alert(`Tempo Completado: O tempo alocado para "${task.title}" foi atingido.`);
+                }
+            }
+            
+            // Marcar tarefa como concluída
+            function completeTask(e) {
+                const taskId = e.target.dataset.id;
+                const task = tasks.find(t => t.id === taskId);
+                
+                if (!task) return;
+                
+                task.completed = true;
+                
+                // Parar o cronômetro se estiver ativo
+                if (timers[taskId]) {
+                    clearInterval(timers[taskId]);
+                    delete timers[taskId];
+                }
+                
+                saveTasks();
+                renderTasks();
+            }
+            
+            // Restaurar tarefa
+            function restoreTask(e) {
+                const taskId = e.target.dataset.id;
+                const task = tasks.find(t => t.id === taskId);
+                
+                if (!task) return;
+                
+                task.completed = false;
+                saveTasks();
+                renderTasks();
+            }
+            
+            // Excluir tarefa
+            function deleteTask(e) {
+                if (!confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                    return;
+                }
+                
+                const taskId = e.target.dataset.id;
+                
+                // Parar o cronômetro se estiver ativo
+                if (timers[taskId]) {
+                    clearInterval(timers[taskId]);
+                    delete timers[taskId];
+                }
+                
+                tasks = tasks.filter(task => task.id !== taskId);
+                saveTasks();
+                renderTasks();
+            }
+            
+            // Salvar tarefas no localStorage
+            function saveTasks() {
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+            
+            // Solicitar permissão para notificações
+            function requestNotificationPermission() {
+                if ("Notification" in window) {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            console.log("Permissão de notificação concedida!");
+                        }
+                    });
+                }
+            }
+            
+            // Inicializar
+            renderTasks();
+            requestNotificationPermission();
+            
+            // Restaurar cronômetros ativos (se houver)
+            tasks.forEach(task => {
+                if (!task.completed && task.timerId) {
+                    toggleTimer({ target: document.querySelector(`.timer-toggle[data-id="${task.id}"]`) });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
